@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2-Player Soccer Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Player 1
+        const player1Size = 50;
+        let player1X = canvas.width / 4 - player1Size / 2;
+        let player1Y = canvas.height / 2 - player1Size / 2;
+        const player1Speed = 5;
+
+        // Player 2
+        const player2Size = 50;
+        let player2X = (3 * canvas.width) / 4 - player2Size / 2;
+        let player2Y = canvas.height / 2 - player2Size / 2;
+        const player2Speed = 5;
+
+        // Ball
+        const ballSize = 20;
+        let ballX = canvas.width / 2 - ballSize / 2;
+        let ballY = canvas.height / 2 - ballSize / 2;
+        let ballSpeedX = 4;
+        let ballSpeedY = 2;
+
+        // Goals
+        const goalWidth = 20;
+        const goalHeight = canvas.height / 4;
+        const goal1X = 0;
+        const goal1Y = canvas.height / 2 - goalHeight / 2;
+        const goal2X = canvas.width - goalWidth;
+        const goal2Y = canvas.height / 2 - goalHeight / 2;
+
+        // Controls
+        const player1Controls = { up: 'w', down: 's', left: 'a', right: 'd' };
+        const player2Controls = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+        const keysPressed = {};
+
+        document.addEventListener('keydown', keyDownHandler);
+        document.addEventListener('keyup', keyUpHandler);
+
+        function keyDownHandler(event) {
+            keysPressed[event.key] = true;
+        }
+
+        function keyUpHandler(event) {
+            keysPressed[event.key] = false;
+        }
+
+        // Collision detection function
+        function isColliding(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y;
+        }
+
+        // Game loop
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Move player 1
+            if (keysPressed[player1Controls.up] && player1Y > 0) player1Y -= player1Speed;
+            if (keysPressed[player1Controls.down] && player1Y < canvas.height - player1Size) player1Y += player1Speed;
+            if (keysPressed[player1Controls.left] && player1X > 0) player1X -= player1Speed;
+            if (keysPressed[player1Controls.right] && player1X < canvas.width / 2 - player1Size) player1X += player1Speed;
+
+            // Move player 2
+            if (keysPressed[player2Controls.up] && player2Y > 0) player2Y -= player2Speed;
+            if (keysPressed[player2Controls.down] && player2Y < canvas.height - player2Size) player2Y += player2Speed;
+            if (keysPressed[player2Controls.left] && player2X > canvas.width / 2) player2X -= player2Speed;
+            if (keysPressed[player2Controls.right] && player2X < canvas.width - player2Size) player2X += player2Speed;
+
+            // Move ball
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Ball collision with walls
+            if (ballX <= 0 || ballX + ballSize >= canvas.width) {
+                ballSpeedX *= -1;
+            }
+
+            if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+                ballSpeedY *= -1;
+            }
+
+            // Ball collision with players
+            const player1Rect = { x: player1X, y: player1Y, width: player1Size, height: player1Size };
+            const player2Rect = { x: player2X, y: player2Y, width: player2Size, height: player2Size };
+            const ballRect = { x: ballX, y: ballY, width: ballSize, height: ballSize };
+
+            if (isColliding(player1Rect, ballRect) || isColliding(player2Rect, ballRect)) {
+                ballSpeedX *= -1;
+                ballSpeedY *= -1;
+            }
+
+            // Ball collision with goals
+            if (ballX <= goal1X + goalWidth && ballY >= goal1Y && ballY <= goal1Y + goalHeight) {
+                // Player 2 scores
+                console.log("Player 2 scores!");
+                resetBall();
+            }
+
+            if (ballX + ballSize >= goal2X && ballY >= goal2Y && ballY <= goal2Y + goalHeight) {
+                // Player 1 scores
+                console.log("Player 1 scores!");
+                resetBall();
+            }
+
+            // Draw players
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player1X, player1Y, player1Size, player1Size);
+
+            ctx.fillStyle = 'red';
+            ctx.fillRect(player2X, player2Y, player2Size, player2Size);
+
+            // Draw ball
+            ctx.fillStyle = 'green';
+            ctx.fillRect(ballX, ballY, ballSize, ballSize);
+
+            // Draw goals
+            ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+            ctx.fillRect(goal1X, goal1Y, goalWidth, goalHeight);
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.fillRect(goal2X, goal2Y, goalWidth, goalHeight);
+
+            requestAnimationFrame(draw);
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2 - ballSize / 2;
+            ballY = canvas.height / 2 - ballSize / 2;
+            ballSpeedX *= Math.random() < 0.5 ? -1 : 1;
+            ballSpeedY *= Math.random() < 0.5 ? -1 : 1;
+        }
+
+        draw();
+    </script>
+</body>
+</html>
